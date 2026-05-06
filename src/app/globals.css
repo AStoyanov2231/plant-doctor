@@ -60,21 +60,15 @@ body {
   display: none;
 }
 
-@keyframes shutter {
-  0%   { opacity: 0;    transform: scale(1); }
-  35%  { opacity: 0.92; transform: scale(1.03); }
-  100% { opacity: 0;    transform: scale(1.07); }
-}
-
 @keyframes slide-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
 
-@keyframes cta-press {
-  0%   { transform: scale(1); }
-  45%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
+/* Camera button expands from button position to fill screen */
+@keyframes cam-expand {
+  from { clip-path: circle(34px at 50% calc(100% - 190px)); }
+  to   { clip-path: circle(160% at 50% calc(100% - 190px)); }
 }
 
 @media (min-width: 480px) {

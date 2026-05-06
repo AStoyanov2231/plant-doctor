@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { P } from '../palette'
-import { BottomNav, H1, Eyebrow } from '../shared'
+import { BottomNav, H1 } from '../shared'
 import type { NavActions } from '../../types/navigation'
 
 interface Props {
@@ -13,18 +13,33 @@ interface Props {
 export function HomeScreen({ nav, onTabChange }: Props) {
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
-  const [triggered, setTriggered] = useState(false)
+  const [expanding, setExpanding] = useState(false)
 
-  function handleTrigger(inputRef: React.RefObject<HTMLInputElement | null>) {
-    if (triggered) return
-    setTriggered(true)
-    setTimeout(() => {
-      inputRef.current?.click()
-      setTriggered(false)
-    }, 280)
+  // Safety net: when the page becomes visible again (camera dismissed),
+  // give handleFileChange 300ms to fire first, then collapse the overlay.
+  useEffect(() => {
+    if (!expanding) return
+    function onVisible() {
+      if (document.visibilityState === 'visible') {
+        setTimeout(() => setExpanding(false), 300)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [expanding])
+
+  function handleCameraClick() {
+    if (expanding) return
+    setExpanding(true)
+    setTimeout(() => cameraInputRef.current?.click(), 450)
+  }
+
+  function handleGalleryClick() {
+    galleryInputRef.current?.click()
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setExpanding(false)
     const file = e.target.files?.[0]
     if (!file) return
     const previewUrl = URL.createObjectURL(file)
@@ -33,16 +48,16 @@ export function HomeScreen({ nav, onTabChange }: Props) {
 
   return (
     <>
-      {/* Shutter flash */}
-      {triggered && (
+      {/* Camera expand overlay — grows from button to fill screen */}
+      {expanding && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: P.ink,
-            zIndex: 999,
+            background: P.primary,
+            zIndex: 998,
             pointerEvents: 'none',
-            animation: 'shutter 0.4s ease-out forwards',
+            animation: 'cam-expand 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards',
           }}
         />
       )}
@@ -83,7 +98,7 @@ export function HomeScreen({ nav, onTabChange }: Props) {
         >
           {/* Camera — icon only circle */}
           <button
-            onClick={() => handleTrigger(cameraInputRef)}
+            onClick={handleCameraClick}
             aria-label="Направи снимка"
             style={{
               width: 68,
@@ -93,7 +108,6 @@ export function HomeScreen({ nav, onTabChange }: Props) {
               border: 'none',
               display: 'grid',
               placeItems: 'center',
-              animation: triggered ? 'cta-press 0.28s ease-out' : 'none',
             }}
           >
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -108,9 +122,9 @@ export function HomeScreen({ nav, onTabChange }: Props) {
             </svg>
           </button>
 
-          {/* Gallery — text pill */}
+          {/* Gallery — text pill, opens picker directly */}
           <button
-            onClick={() => handleTrigger(galleryInputRef)}
+            onClick={handleGalleryClick}
             style={{
               height: 42,
               paddingLeft: 24,
@@ -137,6 +151,7 @@ export function HomeScreen({ nav, onTabChange }: Props) {
           capture="environment"
           style={{ display: 'none' }}
           onChange={handleFileChange}
+          onCancel={() => setExpanding(false)}
         />
         <input
           ref={galleryInputRef}
