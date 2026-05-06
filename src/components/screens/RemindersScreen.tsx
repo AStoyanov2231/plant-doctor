@@ -111,7 +111,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
     <div
       style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100%',
         background: P.bg,
         fontFamily: 'var(--font-inter-tight), sans-serif',
         color: P.ink,
@@ -119,7 +119,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
         flexDirection: 'column',
       }}
     >
-      <div style={{ padding: '6px 24px 100px', flex: 1 }}>
+      <div style={{ padding: '6px 24px 100px', flex: 1, overflowY: 'auto' }}>
         <div
           style={{
             display: 'flex',

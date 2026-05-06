@@ -57,7 +57,7 @@ export function AnalyzingScreen({ file, previewUrl, nav }: Props) {
       <div
         style={{
           width: '100%',
-          minHeight: '100vh',
+          height: '100%',
           background: P.bg,
           display: 'flex',
           flexDirection: 'column',
@@ -108,7 +108,7 @@ export function AnalyzingScreen({ file, previewUrl, nav }: Props) {
     <div
       style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100%',
         background: P.bg,
         fontFamily: 'var(--font-inter-tight), sans-serif',
         color: P.ink,

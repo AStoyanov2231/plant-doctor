@@ -45,7 +45,7 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
     <div
       style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100%',
         background: P.bg,
         fontFamily: 'var(--font-inter-tight), sans-serif',
         color: P.ink,

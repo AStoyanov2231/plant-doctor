@@ -384,7 +384,7 @@ export function AddReminderScreen({ nav, preselectedScanId }: Props) {
       <div
         style={{
           width: '100%',
-          minHeight: '100vh',
+          height: '100%',
           background: 'transparent',
           fontFamily: 'var(--font-inter-tight), sans-serif',
           color: P.ink,

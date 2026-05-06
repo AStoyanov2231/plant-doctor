@@ -151,7 +151,6 @@ export function HomeScreen({ nav, onTabChange }: Props) {
           capture="environment"
           style={{ display: 'none' }}
           onChange={handleFileChange}
-          onCancel={() => setExpanding(false)}
         />
         <input
           ref={galleryInputRef}
