@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { P } from '../palette'
 import { H1, Eyebrow, IssueCard } from '../shared'
 import type { NavActions } from '../../types/navigation'
@@ -9,55 +9,34 @@ import type { Scan } from '../../types/domain'
 interface Props {
   scan: Scan
   nav: NavActions
-  onScanUpdate: (updated: Scan) => void
 }
 
-export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
-  const [isFavorite, setIsFavorite] = useState(scan.isFavorite)
-
+export function DiagnosisScreen({ scan, nav }: Props) {
   const urgencyConfig = {
     high: {
       bg: P.danger + '14',
       border: P.danger,
       dot: P.danger,
-      label: 'Address today',
-      sub: 'Needs attention soon.',
+      label: 'Действай днес',
+      sub: 'Нуждае се от спешно внимание.',
     },
     medium: {
       bg: P.warn + '14',
       border: P.warn,
       dot: P.warn,
-      label: 'Address within a week',
-      sub: "Treatable. Not urgent, but don't put it off.",
+      label: 'Действай в рамките на седмица',
+      sub: 'Лечимо. Не е спешно, но не го отлагай.',
     },
     low: {
       bg: P.ok + '18',
       border: P.ok,
       dot: P.ok,
-      label: 'Looking mostly healthy',
-      sub: 'Minor concern only.',
+      label: 'Изглежда основно здраво',
+      sub: 'Само малко притеснение.',
     },
   }
   const urg = urgencyConfig[scan.urgency ?? 'low']
 
-  async function toggleFavorite() {
-    const next = !isFavorite
-    setIsFavorite(next)
-    try {
-      await fetch(`/api/scans/${scan.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite: next }),
-      })
-      onScanUpdate({ ...scan, isFavorite: next })
-    } catch {
-      setIsFavorite(!next)
-    }
-  }
-
-  const matchPct = scan.speciesConfidence
-    ? `${Math.round(scan.speciesConfidence * 100)}% MATCH`
-    : null
 
   return (
     <div
@@ -76,7 +55,7 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
         style={{
           position: 'relative',
           height: 280,
-          margin: '0 16px',
+          margin: '20px 16px 0',
           borderRadius: 22,
           overflow: 'hidden',
         }}
@@ -90,13 +69,6 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
             }}
           />
         )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `linear-gradient(180deg, transparent 50%, ${P.bg} 100%)`,
-          }}
-        />
         {/* Back button — top left */}
         <div style={{ position: 'absolute', top: 14, left: 14 }}>
           <button
@@ -123,30 +95,9 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
             </svg>
           </button>
         </div>
-        {/* Match badge — top right */}
-        {matchPct && (
-          <div style={{ position: 'absolute', top: 14, right: 14 }}>
-            <div
-              style={{
-                padding: '6px 10px',
-                borderRadius: 999,
-                background: 'rgba(255,255,255,0.9)',
-                backdropFilter: 'blur(8px)',
-                fontFamily: 'var(--font-jetbrains-mono), monospace',
-                fontSize: 10,
-                fontWeight: 600,
-                color: '#1F2A22',
-                letterSpacing: '0.1em',
-              }}
-            >
-              {matchPct}
-            </div>
-          </div>
-        )}
       </div>
 
       <div style={{ padding: '10px 24px 0' }}>
-        <Eyebrow>Identified</Eyebrow>
         <H1 style={{ marginTop: 6, fontSize: 30 }}>
           {scan.speciesCommon || scan.speciesScientific || 'Unknown plant'}
           {scan.speciesScientific && scan.speciesCommon && (
@@ -211,7 +162,7 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
         {/* Issues */}
         {scan.likelyIssues.length > 0 && (
           <div style={{ marginTop: 22 }}>
-            <Eyebrow>Likely issues · {scan.likelyIssues.length} found</Eyebrow>
+            <Eyebrow>Вероятни проблеми · намерени {scan.likelyIssues.length}</Eyebrow>
             <div style={{ marginTop: 12 }}>
               {scan.likelyIssues.map((issue, i) => (
                 <IssueCard
@@ -222,7 +173,7 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
                   steps={
                     scan.recommendedActions.slice(i * 2, i * 2 + 2).length > 0
                       ? scan.recommendedActions.slice(i * 2, i * 2 + 2)
-                      : ['Follow standard care guidelines for this issue.']
+                      : ['Следвай стандартните насоки за грижа за този проблем.']
                   }
                 />
               ))}
@@ -233,7 +184,7 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
         {/* Follow-up suggestions */}
         {scan.followUpQuestions.length > 0 && (
           <div style={{ marginTop: 8 }}>
-            <Eyebrow>Ask a follow-up</Eyebrow>
+            <Eyebrow>Задай допълнителен въпрос</Eyebrow>
             <div
               style={{
                 display: 'flex',
@@ -307,30 +258,7 @@ export function DiagnosisScreen({ scan, nav, onScanUpdate }: Props) {
             fontWeight: 600,
           }}
         >
-          Start chat
-        </button>
-        {/* Save / favorite button — download-style SVG from design, wired to favorite */}
-        <button
-          onClick={toggleFavorite}
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: 14,
-            background: isFavorite ? P.primary + '18' : P.surface,
-            border: `1px solid ${isFavorite ? P.primary + '55' : P.line}`,
-            display: 'grid',
-            placeItems: 'center',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path
-              d="M9 2V11M9 11L5.5 7.5M9 11L12.5 7.5M3 14H15"
-              stroke={isFavorite ? P.primary : P.ink}
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          Започни чат
         </button>
       </div>
     </div>

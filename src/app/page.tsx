@@ -94,7 +94,6 @@ export default function Page() {
         <DiagnosisScreen
           scan={current.scan}
           nav={nav}
-          onScanUpdate={onScanUpdate}
         />
       )
 

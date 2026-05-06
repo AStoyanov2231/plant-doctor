@@ -27,6 +27,9 @@ export interface Scan {
   likelyIssues: DiagnosisIssue[];
   recommendedActions: string[];
   followUpQuestions: string[];
+  careLight: string | null;
+  careWater: string | null;
+  careToxic: string | null;
   isFavorite: boolean;
   createdAt: string;
 }

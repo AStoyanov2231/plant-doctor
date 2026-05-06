@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { P } from '../palette'
 import { BottomNav, H1, Eyebrow } from '../shared'
 import type { NavActions } from '../../types/navigation'
-import type { Scan } from '../../types/domain'
 
 interface Props {
   nav: NavActions
@@ -12,15 +11,18 @@ interface Props {
 }
 
 export function HomeScreen({ nav, onTabChange }: Props) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [recentScans, setRecentScans] = useState<Scan[]>([])
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
+  const [triggered, setTriggered] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/scans?limit=4')
-      .then((r) => r.json())
-      .then((data) => setRecentScans(Array.isArray(data) ? data : []))
-      .catch(() => {})
-  }, [])
+  function handleTrigger(inputRef: React.RefObject<HTMLInputElement | null>) {
+    if (triggered) return
+    setTriggered(true)
+    setTimeout(() => {
+      inputRef.current?.click()
+      setTriggered(false)
+    }, 280)
+  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -30,263 +32,120 @@ export function HomeScreen({ nav, onTabChange }: Props) {
   }
 
   return (
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        background: P.bg,
-        fontFamily: 'var(--font-inter-tight), sans-serif',
-        color: P.ink,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <div style={{ padding: '8px 24px 0', flex: 1 }}>
-        {/* Header row */}
+    <>
+      {/* Shutter flash */}
+      {triggered && (
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            position: 'fixed',
+            inset: 0,
+            background: P.ink,
+            zIndex: 999,
+            pointerEvents: 'none',
+            animation: 'shutter 0.4s ease-out forwards',
           }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 19,
-              background: P.primary,
-              color: P.primaryInk,
-              display: 'grid',
-              placeItems: 'center',
-              fontFamily: 'var(--font-fraunces), serif',
-              fontVariationSettings: '"opsz" 144, "SOFT" 50',
-              fontSize: 20,
-              fontStyle: 'italic',
-            }}
-          >
-            p
-          </div>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 19,
-              border: `1px solid ${P.line}`,
-              display: 'grid',
-              placeItems: 'center',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="6" r="2.5" stroke={P.ink} strokeWidth="1.4" />
-              <path
-                d="M3 14C3 11 5 10 8 10C11 10 13 11 13 14"
-                stroke={P.ink}
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-        </div>
+        />
+      )}
 
+      <div
+        style={{
+          width: '100%',
+          height: '100vh',
+          background: P.bg,
+          fontFamily: 'var(--font-inter-tight), sans-serif',
+          color: P.ink,
+          position: 'relative',
+        }}
+      >
         {/* Headline */}
-        <div style={{ marginTop: 28 }}>
-          <Eyebrow>Plant&nbsp;·&nbsp;Doctor</Eyebrow>
+        <div style={{ padding: '36px 24px 0' }}>
           <H1 style={{ marginTop: 10 }}>
-            What&apos;s
+            Какво
             <br />
-            <span style={{ fontStyle: 'italic', color: P.primary }}>troubling</span> your
+            <span style={{ fontStyle: 'italic', color: P.primary }}>тревожи</span> твоето
             <br />
-            plant today?
+            растение днес?
           </H1>
-          <p
-            style={{
-              marginTop: 14,
-              fontSize: 14.5,
-              lineHeight: 1.5,
-              color: P.inkSoft,
-              maxWidth: 280,
-            }}
-          >
-            Snap a photo of a leaf, stem, or the whole plant. We&apos;ll identify it and
-            tell you what&apos;s going on.
-          </p>
         </div>
 
-        {/* Upload card */}
+        {/* CTAs — float above the nav bar (nav is ~80px tall) */}
         <div
           style={{
-            marginTop: 22,
-            background: P.surface,
-            border: `1px solid ${P.line}`,
-            borderRadius: 22,
-            padding: 18,
+            position: 'absolute',
+            bottom: 100,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 14,
           }}
         >
+          {/* Camera — icon only circle */}
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => handleTrigger(cameraInputRef)}
+            aria-label="Направи снимка"
             style={{
-              width: '100%',
-              height: 220,
-              borderRadius: 14,
-              border: `1.5px dashed ${P.primary}55`,
-              background: `repeating-linear-gradient(135deg, ${P.bg}, ${P.bg} 8px, ${P.surface} 8px, ${P.surface} 16px)`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-              cursor: 'pointer',
+              width: 68,
+              height: 68,
+              borderRadius: 999,
+              background: P.primary,
+              border: 'none',
+              display: 'grid',
+              placeItems: 'center',
+              animation: triggered ? 'cta-press 0.28s ease-out' : 'none',
             }}
           >
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                background: P.primary,
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect
-                  x="3"
-                  y="6"
-                  width="18"
-                  height="14"
-                  rx="2"
-                  stroke={P.primaryInk}
-                  strokeWidth="1.6"
-                />
-                <path
-                  d="M8 6L9.5 4H14.5L16 6"
-                  stroke={P.primaryInk}
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-                <circle cx="12" cy="13" r="3.5" stroke={P.primaryInk} strokeWidth="1.6" />
-              </svg>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 600, fontSize: 15, color: P.ink }}>Take a photo</div>
-              <div style={{ fontSize: 12.5, color: P.inkMute, marginTop: 2 }}>
-                Or upload from library
-              </div>
-            </div>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+              <rect x="2" y="8" width="24" height="16" rx="3" stroke={P.primaryInk} strokeWidth="1.8" />
+              <path
+                d="M9 8L11 5H17L19 8"
+                stroke={P.primaryInk}
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <circle cx="14" cy="16" r="4" stroke={P.primaryInk} strokeWidth="1.8" />
+            </svg>
           </button>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                flex: 1,
-                height: 46,
-                borderRadius: 12,
-                background: P.ink,
-                color: P.bg,
-                border: 'none',
-                fontFamily: 'var(--font-inter-tight), sans-serif',
-                fontSize: 14,
-                fontWeight: 600,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Choose from library
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 12,
-                background: 'transparent',
-                border: `1px solid ${P.line}`,
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <rect x="2.5" y="3" width="13" height="12" rx="1.5" stroke={P.ink} strokeWidth="1.5" />
-                <path
-                  d="M5.5 1.5V4M12.5 1.5V4M2.5 7H15.5"
-                  stroke={P.ink}
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
+          {/* Gallery — text pill */}
+          <button
+            onClick={() => handleTrigger(galleryInputRef)}
+            style={{
+              height: 42,
+              paddingLeft: 24,
+              paddingRight: 24,
+              borderRadius: 999,
+              background: 'transparent',
+              color: P.inkSoft,
+              border: `1px solid ${P.line}`,
+              fontFamily: 'var(--font-inter-tight), sans-serif',
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            Избери от галерия
+          </button>
         </div>
 
-        {/* Recent scans strip */}
-        {recentScans.length > 0 && (
-          <div style={{ marginTop: 22 }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-              }}
-            >
-              <Eyebrow>Recent</Eyebrow>
-              <button
-                onClick={() => onTabChange('history')}
-                style={{
-                  fontSize: 12,
-                  color: P.primary,
-                  fontWeight: 500,
-                  background: 'transparent',
-                  border: 'none',
-                  fontFamily: 'var(--font-inter-tight), sans-serif',
-                }}
-              >
-                View all →
-              </button>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                gap: 10,
-                marginTop: 10,
-                overflowX: 'auto',
-                paddingBottom: 4,
-              }}
-            >
-              {recentScans.map((scan) => (
-                <button
-                  key={scan.id}
-                  onClick={() => nav.push({ name: 'plant-detail', scan })}
-                  style={{
-                    width: 72,
-                    height: 88,
-                    borderRadius: 10,
-                    background: scan.imageUrl
-                      ? `url(${scan.imageUrl}) center/cover`
-                      : P.line,
-                    flexShrink: 0,
-                    border: `1px solid ${P.line}`,
-                    padding: 0,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <BottomNav active="home" onNavigate={onTabChange} />
+
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
       </div>
-
-      <div style={{ height: 88 }} />
-
-      <BottomNav active="home" onNavigate={onTabChange} />
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-    </div>
+    </>
   )
 }

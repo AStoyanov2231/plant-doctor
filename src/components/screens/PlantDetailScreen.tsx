@@ -19,11 +19,12 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
     const next = !isFavorite
     setIsFavorite(next)
     try {
-      await fetch(`/api/scans/${scan.id}`, {
+      const res = await fetch(`/api/scans/${scan.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite: next }),
+        body: JSON.stringify({ is_favorite: next }),
       })
+      if (!res.ok) throw new Error('patch failed')
       onScanUpdate({ ...scan, isFavorite: next })
     } catch {
       setIsFavorite(!next)
@@ -32,10 +33,10 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
 
   const statusLabel =
     scan.urgency === 'high'
-      ? 'NEEDS ATTENTION'
+      ? 'НУЖДАЕ СЕ ОТ ВНИМАНИЕ'
       : scan.urgency === 'medium'
-      ? 'MONITOR'
-      : 'HEALTHY'
+      ? 'НАБЛЮДЕНИЕ'
+      : 'ЗДРАВО'
 
   const statusColor =
     scan.urgency === 'high' ? P.danger : scan.urgency === 'medium' ? P.warn : P.ok
@@ -53,7 +54,7 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
       }}
     >
       {/* Hero image */}
-      <div style={{ position: 'relative', margin: '0 16px' }}>
+      <div style={{ position: 'relative', margin: '20px 16px 0' }}>
         <div
           style={{
             height: 320,
@@ -128,11 +129,8 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
       </div>
 
       <div style={{ padding: '18px 24px 28px' }}>
-        <Eyebrow>
-          {scan.speciesScientific ? 'Identified species' : 'Plant scan'}
-        </Eyebrow>
-        <H1 style={{ marginTop: 6, fontSize: 28 }}>
-          {scan.speciesCommon || scan.speciesScientific || 'Unknown plant'}
+        <H1 style={{ marginTop: 0, fontSize: 28 }}>
+          {scan.speciesCommon || scan.speciesScientific || 'Неизвестно растение'}
           {scan.speciesScientific && scan.speciesCommon && (
             <span
               style={{
@@ -161,9 +159,9 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
           }}
         >
           {[
-            { l: 'Light', v: '—' },
-            { l: 'Water', v: '—' },
-            { l: 'Toxic', v: '—' },
+            { l: 'Светлина', v: scan.careLight ?? 'Няма данни' },
+            { l: 'Вода', v: scan.careWater ?? 'Няма данни' },
+            { l: 'Токсично', v: scan.careToxic ?? 'Няма данни' },
           ].map((s, i) => (
             <div
               key={i}
@@ -203,7 +201,7 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
         {/* Likely issues */}
         {scan.likelyIssues.length > 0 && (
           <div style={{ marginTop: 24 }}>
-            <Eyebrow>Likely issues · {scan.likelyIssues.length} found</Eyebrow>
+            <Eyebrow>Вероятни проблеми · намерени {scan.likelyIssues.length}</Eyebrow>
             <div style={{ marginTop: 12 }}>
               {scan.likelyIssues.map((issue, i) => (
                 <IssueCard
@@ -214,7 +212,7 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
                   steps={
                     scan.recommendedActions.slice(i * 2, i * 2 + 2).length > 0
                       ? scan.recommendedActions.slice(i * 2, i * 2 + 2)
-                      : ['Follow standard care guidelines.']
+                      : ['Следвай стандартните насоки за грижа.']
                   }
                 />
               ))}
@@ -224,7 +222,7 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
 
         {/* Care log timeline — from design */}
         <div style={{ marginTop: 24 }}>
-          <Eyebrow>Care log</Eyebrow>
+          <Eyebrow>Дневник за грижи</Eyebrow>
           <div style={{ marginTop: 12, position: 'relative', paddingLeft: 18 }}>
             <div
               style={{
@@ -267,20 +265,20 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
                   }}
                 >
                   {new Date(scan.createdAt)
-                    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    .toLocaleDateString('bg-BG', { month: 'short', day: 'numeric' })
                     .toUpperCase()}
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 500, marginTop: 2 }}>
-                  Diagnosis:{' '}
+                  Диагноза:{' '}
                   {scan.urgency === 'high'
-                    ? 'Needs attention'
+                    ? 'Нуждае се от внимание'
                     : scan.urgency === 'medium'
-                    ? 'Some concerns'
-                    : 'Healthy'}
+                    ? 'Има притеснения'
+                    : 'Здраво'}
                 </div>
                 {scan.speciesConfidence && (
                   <div style={{ fontSize: 12.5, color: P.inkSoft, marginTop: 1 }}>
-                    Confidence {Math.round(scan.speciesConfidence * 100)}%
+                    Достоверност {Math.round(scan.speciesConfidence * 100)}%
                   </div>
                 )}
               </div>
@@ -304,7 +302,7 @@ export function PlantDetailScreen({ scan, nav, onScanUpdate }: Props) {
               fontWeight: 600,
             }}
           >
-            Chat about this plant
+            Чат за това растение
           </button>
           <button
             onClick={() => nav.push({ name: 'new-reminder', preselectedScanId: scan.id })}

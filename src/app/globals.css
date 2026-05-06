@@ -52,6 +52,31 @@ body {
   overflow: hidden;
 }
 
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes shutter {
+  0%   { opacity: 0;    transform: scale(1); }
+  35%  { opacity: 0.92; transform: scale(1.03); }
+  100% { opacity: 0;    transform: scale(1.07); }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes cta-press {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
 @media (min-width: 480px) {
   body {
     background: #1A1F1B;

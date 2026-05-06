@@ -1,72 +1,61 @@
 import type { PlantNetResult } from "@/lib/services/plantnet";
-import type { FloraResult } from "@/lib/services/flora";
 
-export const DIAGNOSIS_SYSTEM_PROMPT = `You are a friendly, calm, and knowledgeable plant health assistant.
-Your audience is home gardeners, parents, and non-technical users. Keep language simple and approachable.
+export const DIAGNOSIS_SYSTEM_PROMPT = `Ти си приятелски настроен, спокоен и компетентен асистент за здравето на растенията.
+Аудиторията ти са домашни градинари, родители и нетехнически потребители. Използвай прост и достъпен език.
+ВАЖНО: Отговаряй САМО на български език.
 
-CRITICAL RULES — follow these exactly:
-1. NEVER use absolute language. Do NOT say "definitely", "certainly", "your plant has X".
-2. ALWAYS phrase issues as possibilities: "possible signs of", "may indicate", "likely", "early signs of".
-3. Base your diagnosis ONLY on the data provided. If FloraAPI found no diseases, say so — do not invent issues.
-4. If disease data is missing or inconclusive, focus on general care advice and reassure the user.
-5. Keep the summary to 2–4 friendly sentences. Avoid jargon.
-6. Urgency levels: "low" = monitor only, "medium" = take action this week, "high" = act immediately.
-7. You MUST respond with valid JSON matching the schema exactly. No extra keys, no markdown fences.
+КРИТИЧНИ ПРАВИЛА — следвай ги точно:
+1. НИКОГА не използвай абсолютен език. НЕ казвай "определено", "сигурно", "растението ти има X".
+2. ВИНАГИ формулирай проблемите като възможности: "възможни признаци на", "може да показва", "вероятно", "ранни признаци на".
+3. Използвай знанията си за идентифицирания вид, за да прецениш дали видяното е нормално или проблем.
+4. Ако растението изглежда здраво, кажи го ясно и предложи един съвет за грижа за този вид.
+5. Дръж резюмето до 2–4 приятелски изречения. Избягвай жаргон.
+6. Нива на спешност: "low" = само наблюдавай, "medium" = действай тази седмица, "high" = действай незабавно.
+7. ЗАДЪЛЖИТЕЛНО отговаряй с валиден JSON, точно съответстващ на схемата. Без допълнителни ключове, без markdown.
 
-JSON schema:
+JSON схема:
 {
-  "summary": "string — friendly 2–4 sentence explanation",
+  "summary": "string — приятелско обяснение от 2–4 изречения",
   "likelyIssues": [
-    { "name": "string", "probability": "low|medium|high", "why": "string — brief one-sentence reason" }
+    { "name": "string", "probability": "low|medium|high", "why": "string — кратка причина в едно изречение" }
   ],
-  "recommendedActions": ["string — actionable step"],
+  "recommendedActions": ["string — конкретна стъпка за действие"],
   "urgency": "low|medium|high",
-  "followUpQuestions": ["string — question the user might want to ask next"]
+  "followUpQuestions": ["string — въпрос, който потребителят може да иска да зададе"],
+  "careLight": "string — нужди от светлина (напр. 'Директна светлина', 'Полусянка') или null ако не е известно",
+  "careWater": "string — нужди от поливане (напр. 'Умерено, когато почвата изсъхне') или null ако не е известно",
+  "careToxic": "string — токсичност (напр. 'Токсично за котки и кучета', 'Не е токсично') или null ако не е известно"
 }`;
 
-export function buildDiagnosisPrompt(opts: {
-  plantnet: PlantNetResult;
-  flora: FloraResult | null;
-}): string {
-  const { plantnet, flora } = opts;
+export function buildDiagnosisPrompt(opts: { plantnet: PlantNetResult }): string {
+  const { plantnet } = opts;
 
-  const topSpecies = plantnet.topResults[0];
-  const speciesLine = topSpecies
-    ? `Species identified: ${topSpecies.scientificName} (confidence: ${(topSpecies.score * 100).toFixed(0)}%)`
-    : "Species: Could not identify";
+  const top = plantnet.topResults[0];
+  const speciesLine = top
+    ? `Идентифициран вид: ${top.scientificName} (${(top.score * 100).toFixed(0)}% достоверност)`
+    : "Вид: не може да бъде идентифициран — диагностицирай само по изображението.";
 
-  const commonNames =
-    topSpecies?.commonNames.length
-      ? `Common names: ${topSpecies.commonNames.slice(0, 3).join(", ")}`
-      : "";
-
-  let diseaseSection: string;
-  if (!flora) {
-    diseaseSection = "Disease/health analysis: Not available.";
-  } else if (flora.diseases.length === 0) {
-    diseaseSection = "Disease/health analysis: No diseases or issues detected.";
-  } else {
-    const items = flora.diseases
-      .map(
-        (d) =>
-          `- ${d.name} (probability: ${(d.probability * 100).toFixed(0)}%)${d.treatment ? ` — Treatment hint: ${d.treatment}` : ""}`
-      )
-      .join("\n");
-    diseaseSection = `Disease/health analysis:\n${items}`;
-  }
-
-  const careSection = flora?.careAdvice
-    ? `Care advice from analysis:\n${JSON.stringify(flora.careAdvice, null, 2)}`
+  const commonNames = top?.commonNames.length
+    ? `Общи имена: ${top.commonNames.slice(0, 3).join(", ")}`
     : "";
 
+  const otherCandidates =
+    plantnet.topResults.length > 1
+      ? `Други кандидати: ${plantnet.topResults
+          .slice(1, 4)
+          .map((r) => `${r.scientificName} (${(r.score * 100).toFixed(0)}%)`)
+          .join(", ")}`
+      : "";
+
   return [
-    "Please diagnose this plant based on the following data:",
+    "Диагностицирай това растение, използвайки изображението и данните за идентификация по-долу.",
     speciesLine,
     commonNames,
-    diseaseSection,
-    careSection,
+    otherCandidates,
     "",
-    "Respond with the JSON diagnosis schema only.",
+    "Прегледай изображението за: симптоми на болест, щети от вредители, хранителни дефицити, прекомерно или недостатъчно поливане, слънчево изгаряне или физически увреждания.",
+    "Използвай знанията си за типичните нужди от грижа, честите болести и естествения вид на този вид, за да информираш диагнозата си.",
+    "Отговори само с JSON схемата.",
   ]
     .filter(Boolean)
     .join("\n");

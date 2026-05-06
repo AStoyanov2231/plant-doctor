@@ -45,7 +45,7 @@ export function ChatScreen({ scan, nav }: Props) {
     fetch(`/api/scans/${scan.id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.chatMessages) setMessages(data.chatMessages)
+        if (data.scan?.chatMessages) setMessages(data.scan.chatMessages)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -71,7 +71,7 @@ export function ChatScreen({ scan, nav }: Props) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scanId: scan.id, message: text.trim() }),
+        body: JSON.stringify({ scan_id: scan.id, message: text.trim() }),
       })
       const data = await res.json()
       if (data.message) {
@@ -154,42 +154,9 @@ export function ChatScreen({ scan, nav }: Props) {
                 lineHeight: 1.1,
               }}
             >
-              {scan.speciesCommon || scan.speciesScientific || 'Your plant'}
-            </div>
-            <div
-              style={{
-                fontSize: 11.5,
-                color: P.inkMute,
-                marginTop: 2,
-                fontFamily: 'var(--font-jetbrains-mono), monospace',
-                letterSpacing: '0.05em',
-              }}
-            >
-              <span style={{ color: P.ok }}>●</span> Diagnosis from{' '}
-              {new Date(scan.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}
+              {scan.speciesCommon || scan.speciesScientific || 'Твоето растение'}
             </div>
           </div>
-          {/* Three-dot menu */}
-          <button
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: 'transparent',
-              border: `1px solid ${P.line}`,
-              display: 'grid',
-              placeItems: 'center',
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="3" cy="7" r="1.2" fill={P.ink} />
-              <circle cx="7" cy="7" r="1.2" fill={P.ink} />
-              <circle cx="11" cy="7" r="1.2" fill={P.ink} />
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -208,7 +175,7 @@ export function ChatScreen({ scan, nav }: Props) {
           <div
             style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', marginTop: 20 }}
           >
-            Loading…
+            Зареждане…
           </div>
         )}
 
@@ -224,7 +191,7 @@ export function ChatScreen({ scan, nav }: Props) {
                 letterSpacing: '0.1em',
               }}
             >
-              {new Date(scan.createdAt).toLocaleDateString('en-US', {
+              {new Date(scan.createdAt).toLocaleDateString('bg-BG', {
                 month: 'short',
                 day: 'numeric',
               }).toUpperCase()}
@@ -250,7 +217,7 @@ export function ChatScreen({ scan, nav }: Props) {
                 }}
               >
                 {scan.summary ||
-                  `I've diagnosed your ${scan.speciesCommon || 'plant'}. Ask me anything about its care.`}
+                  `Диагностицирах твоето ${scan.speciesCommon || 'растение'}. Попитай ме нещо за грижата.`}
               </div>
             </div>
             {/* Suggestion chips after the intro bot message */}
@@ -404,7 +371,7 @@ export function ChatScreen({ scan, nav }: Props) {
                 sendMessage(input)
               }
             }}
-            placeholder="Ask anything…"
+            placeholder="Попитай нещо…"
             style={{
               flex: 1,
               fontSize: 14,
@@ -415,31 +382,6 @@ export function ChatScreen({ scan, nav }: Props) {
               fontFamily: 'var(--font-inter-tight), sans-serif',
             }}
           />
-          {/* Camera icon — from design */}
-          <button
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 19,
-              background: 'transparent',
-              border: 'none',
-              display: 'grid',
-              placeItems: 'center',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect
-                x="3"
-                y="4"
-                width="12"
-                height="9"
-                rx="1.5"
-                stroke={P.inkSoft}
-                strokeWidth="1.5"
-              />
-              <circle cx="9" cy="8.5" r="2" stroke={P.inkSoft} strokeWidth="1.5" />
-            </svg>
-          </button>
           {/* Send button */}
           <button
             onClick={() => sendMessage(input)}

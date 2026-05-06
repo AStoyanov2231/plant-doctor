@@ -1,7 +1,6 @@
 import sharp from "sharp";
 import { supabase } from "@/lib/supabase/server";
 import { identifyPlant } from "@/lib/services/plantnet";
-import { analyzePlantHealth } from "@/lib/services/flora";
 import { generateDiagnosis } from "@/lib/services/gemini";
 import { env } from "@/lib/env";
 import { AppError } from "@/lib/errors";
@@ -66,26 +65,15 @@ export async function runDiagnosisPipeline(opts: {
   // 4. PlantNet identification
   const plantnet = await identifyPlant({ image: imageBuffer, organs });
 
-  // 5. FloraAPI disease analysis (non-fatal — pipeline continues if it fails)
-  let flora = null;
-  try {
-    flora = await analyzePlantHealth({
-      image: imageBuffer,
-      species: plantnet.topResults[0]?.scientificName,
-    });
-  } catch (err) {
-    console.error("[pipeline] FloraAPI failed, continuing without disease data", err);
-  }
-
-  // 6. Gemini synthesis
+  // 5. Gemini synthesis
   const imageBase64 = imageBuffer.toString("base64");
-  const diagnosis = await generateDiagnosis({ plantnet, flora, imageBase64 });
+  const diagnosis = await generateDiagnosis({ plantnet, imageBase64 });
 
   // 7. Persist full results
   const updatePayload: Partial<DbScan> = {
     image_path: imagePath,
     plantnet_raw: plantnet.raw as never,
-    flora_raw: flora?.raw as never ?? null,
+    flora_raw: null,
     gemini_raw: diagnosis as never,
     species_scientific: plantnet.topResults[0]?.scientificName ?? null,
     species_common: plantnet.topResults[0]?.commonNames[0] ?? null,
@@ -128,6 +116,7 @@ export async function getScanWithSignedUrl(row: DbScan): Promise<Scan> {
 }
 
 export function dbScanToScan(row: DbScan, imageUrl: string): Scan {
+  const g = row.gemini_raw as { careLight?: string | null; careWater?: string | null; careToxic?: string | null } | null;
   return {
     id: row.id,
     deviceId: row.device_id,
@@ -140,6 +129,9 @@ export function dbScanToScan(row: DbScan, imageUrl: string): Scan {
     likelyIssues: (row.likely_issues as never) ?? [],
     recommendedActions: (row.recommended_actions as never) ?? [],
     followUpQuestions: (row.follow_up_questions as never) ?? [],
+    careLight: g?.careLight ?? null,
+    careWater: g?.careWater ?? null,
+    careToxic: g?.careToxic ?? null,
     isFavorite: row.is_favorite,
     createdAt: row.created_at,
   };

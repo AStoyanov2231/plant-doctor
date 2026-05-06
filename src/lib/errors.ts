@@ -7,7 +7,6 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "FORBIDDEN"
   | "UPSTREAM_PLANTNET"
-  | "UPSTREAM_FLORA"
   | "UPSTREAM_GEMINI"
   | "INTERNAL";
 
@@ -18,7 +17,6 @@ const HTTP_STATUS: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   FORBIDDEN: 403,
   UPSTREAM_PLANTNET: 502,
-  UPSTREAM_FLORA: 502,
   UPSTREAM_GEMINI: 502,
   INTERNAL: 500,
 };

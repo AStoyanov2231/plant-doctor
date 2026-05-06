@@ -66,9 +66,9 @@ export function Eyebrow({
 type NavTab = 'home' | 'history' | 'reminders'
 
 const NAV_ITEMS: { key: NavTab; label: string; icon: string }[] = [
-  { key: 'home', label: 'Diagnose', icon: 'leaf' },
-  { key: 'history', label: 'History', icon: 'list' },
-  { key: 'reminders', label: 'Reminders', icon: 'bell' },
+  { key: 'home', label: 'Диагноза', icon: 'leaf' },
+  { key: 'history', label: 'История', icon: 'list' },
+  { key: 'reminders', label: 'Напомняния', icon: 'bell' },
 ]
 
 function NavIcon({ name, on }: { name: string; on: boolean }) {
@@ -185,9 +185,9 @@ export function BottomNav({
 
 export function ProbabilityTag({ level }: { level: 'high' | 'medium' | 'low' }) {
   const map = {
-    high: { bg: P.danger + '18', fg: P.danger, label: 'High' },
-    medium: { bg: P.warn + '22', fg: P.warn, label: 'Medium' },
-    low: { bg: P.ok + '22', fg: P.ok, label: 'Low' },
+    high: { bg: P.danger + '18', fg: P.danger, label: 'Висока' },
+    medium: { bg: P.warn + '22', fg: P.warn, label: 'Средна' },
+    low: { bg: P.ok + '22', fg: P.ok, label: 'Ниска' },
   }
   const s = map[level]
   return (
@@ -266,7 +266,7 @@ export function IssueCard({
         {why}
       </p>
       <div style={{ borderTop: `1px dashed ${P.line}`, paddingTop: 12 }}>
-        <Eyebrow>Do this</Eyebrow>
+        <Eyebrow>Направи това</Eyebrow>
         <ol
           style={{
             margin: '8px 0 0',

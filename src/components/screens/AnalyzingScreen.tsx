@@ -7,10 +7,10 @@ import type { NavActions } from '../../types/navigation'
 import type { Scan } from '../../types/domain'
 
 const STEPS = [
-  'Identifying species',
-  'Analyzing leaf health',
-  'Cross-checking pests & diseases',
-  'Drafting care plan',
+  'Идентифициране на вида',
+  'Анализ на здравето на листата',
+  'Проверка за вредители и болести',
+  'Изготвяне на план за грижа',
 ]
 
 interface Props {
@@ -36,9 +36,10 @@ export function AnalyzingScreen({ file, previewUrl, nav }: Props) {
         clearInterval(stepTimer)
         if (!res.ok) {
           const err = await res.json().catch(() => ({}))
-          throw new Error(err.error || 'Scan failed')
+          throw new Error(err.error?.message || err.error || 'Scan failed')
         }
-        return res.json() as Promise<Scan>
+        const body = await res.json() as { scan: Scan }
+        return body.scan
       })
       .then((scan) => {
         nav.push({ name: 'diagnosis', scan })
@@ -80,7 +81,7 @@ export function AnalyzingScreen({ file, previewUrl, nav }: Props) {
           <span style={{ fontSize: 24 }}>!</span>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 600, fontSize: 16, color: P.ink }}>Scan failed</div>
+          <div style={{ fontWeight: 600, fontSize: 16, color: P.ink }}>Сканирането е неуспешно</div>
           <div style={{ fontSize: 14, color: P.inkSoft, marginTop: 6 }}>{error}</div>
         </div>
         <button
@@ -97,7 +98,7 @@ export function AnalyzingScreen({ file, previewUrl, nav }: Props) {
             fontWeight: 600,
           }}
         >
-          Try again
+          Опитай отново
         </button>
       </div>
     )
@@ -188,9 +189,9 @@ export function AnalyzingScreen({ file, previewUrl, nav }: Props) {
         </div>
 
         <div style={{ marginTop: 28, textAlign: 'center' }}>
-          <Eyebrow color={P.primary}>● Analyzing</Eyebrow>
+          <Eyebrow color={P.primary}>● Анализиране</Eyebrow>
           <H1 style={{ marginTop: 8, fontSize: 26 }}>
-            Reading the <span style={{ fontStyle: 'italic' }}>leaves</span>…
+            Четем <span style={{ fontStyle: 'italic' }}>листата</span>…
           </H1>
         </div>
 

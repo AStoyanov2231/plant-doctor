@@ -18,14 +18,14 @@ function formatDate(iso: string): string {
   const now = new Date()
   const diff = (now.getTime() - d.getTime()) / 1000
   if (diff < 86400 * 2)
-    return 'Today, ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    return 'Днес, ' + d.toLocaleTimeString('bg-BG', { hour: 'numeric', minute: '2-digit' })
   if (diff < 86400 * 7)
     return (
-      d.toLocaleDateString('en-US', { weekday: 'short' }) +
+      d.toLocaleDateString('bg-BG', { weekday: 'short' }) +
       ', ' +
-      d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      d.toLocaleTimeString('bg-BG', { hour: 'numeric', minute: '2-digit' })
     )
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('bg-BG', { month: 'short', day: 'numeric' })
 }
 
 function groupByWeek(scans: Scan[]): { label: string; items: Scan[] }[] {
@@ -34,8 +34,8 @@ function groupByWeek(scans: Scan[]): { label: string; items: Scan[] }[] {
   const thisWeek = scans.filter((s) => new Date(s.createdAt) >= weekAgo)
   const earlier = scans.filter((s) => new Date(s.createdAt) < weekAgo)
   const groups: { label: string; items: Scan[] }[] = []
-  if (thisWeek.length) groups.push({ label: 'This week', items: thisWeek })
-  if (earlier.length) groups.push({ label: 'Earlier', items: earlier })
+  if (thisWeek.length) groups.push({ label: 'Тази седмица', items: thisWeek })
+  if (earlier.length) groups.push({ label: 'По-рано', items: earlier })
   return groups
 }
 
@@ -45,10 +45,17 @@ const urgencyDot: Record<string, string> = {
   low: P.ok,
 }
 const urgencyLabel: Record<string, string> = {
-  high: 'High',
-  medium: 'Medium',
-  low: 'Healthy',
+  high: 'Висок',
+  medium: 'Среден',
+  low: 'Здраво',
 }
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: 'all', label: 'Всички' },
+  { key: 'favorites', label: '★ Любими' },
+  { key: 'attention', label: 'Нуждаещи се' },
+  { key: 'healthy', label: 'Здрави' },
+]
 
 export function HistoryScreen({ nav, onTabChange }: Props) {
   const [scans, setScans] = useState<Scan[]>([])
@@ -58,7 +65,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
   useEffect(() => {
     fetch('/api/scans')
       .then((r) => r.json())
-      .then((d) => setScans(Array.isArray(d) ? d : []))
+      .then((d) => setScans(Array.isArray(d.scans) ? d.scans : []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -80,29 +87,28 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
       await fetch(`/api/scans/${scan.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite: next }),
+        body: JSON.stringify({ is_favorite: next }),
       })
     } catch {
       setScans((prev) => prev.map((s) => (s.id === scan.id ? { ...s, isFavorite: !next } : s)))
     }
   }
 
+  // Empty state
   if (!loading && scans.length === 0) {
     return (
       <div
         style={{
           width: '100%',
-          minHeight: '100vh',
+          height: '100vh',
           background: P.bg,
           fontFamily: 'var(--font-inter-tight), sans-serif',
           color: P.ink,
-          display: 'flex',
-          flexDirection: 'column',
+          position: 'relative',
         }}
       >
-        <div style={{ padding: '6px 24px' }}>
-          <Eyebrow>0 scans</Eyebrow>
-          <H1 style={{ marginTop: 6 }}>History</H1>
+        <div style={{ padding: '36px 24px 0' }}>
+          <H1>История</H1>
         </div>
         <div
           style={{
@@ -135,12 +141,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
                 strokeWidth="1.6"
                 strokeLinejoin="round"
               />
-              <path
-                d="M8 32L23 17"
-                stroke={P.primary}
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
+              <path d="M8 32L23 17" stroke={P.primary} strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </div>
           <div>
@@ -152,7 +153,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
                 lineHeight: 1.2,
               }}
             >
-              No scans yet
+              Все още няма сканирания
             </div>
             <p
               style={{
@@ -163,8 +164,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
                 maxWidth: 240,
               }}
             >
-              Diagnose your first plant and we&apos;ll keep a tidy timeline of every
-              check-in here.
+              Диагностицирай първото си растение и ще запазим хронология на всяка проверка тук.
             </p>
           </div>
           <button
@@ -182,7 +182,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
               fontWeight: 600,
             }}
           >
-            Diagnose a plant
+            Диагностицирай растение
           </button>
         </div>
         <BottomNav active="history" onNavigate={onTabChange} />
@@ -190,91 +190,30 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
     )
   }
 
-  const FILTERS: { key: FilterKey; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'favorites', label: '★ Favorites' },
-    { key: 'attention', label: 'Needs attention' },
-    { key: 'healthy', label: 'Healthy' },
-  ]
-
   return (
     <div
       style={{
         width: '100%',
-        minHeight: '100vh',
+        height: '100vh',
         background: P.bg,
         fontFamily: 'var(--font-inter-tight), sans-serif',
         color: P.ink,
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ padding: '6px 24px 100px', flex: 1 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-end',
-          }}
-        >
-          <div>
-            <Eyebrow>
-              {scans.length} scan{scans.length !== 1 ? 's' : ''}
-            </Eyebrow>
-            <H1 style={{ marginTop: 6 }}>History</H1>
-          </div>
-          {/* Search + filter icon buttons from design */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
-                border: `1px solid ${P.line}`,
-                background: 'transparent',
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="6" cy="6" r="4" stroke={P.ink} strokeWidth="1.5" />
-                <path
-                  d="M9 9L12 12"
-                  stroke={P.ink}
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-            <button
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 19,
-                border: `1px solid ${P.line}`,
-                background: 'transparent',
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M2 4H12M3.5 7H10.5M5 10H9"
-                  stroke={P.ink}
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+      {/* Fixed header */}
+      <div style={{ padding: '36px 24px 0', flexShrink: 0 }}>
+        <H1>История</H1>
 
         {/* Filter chips */}
         <div
           style={{
             display: 'flex',
             gap: 6,
-            marginTop: 18,
+            marginTop: 16,
             overflowX: 'auto',
             paddingBottom: 2,
           }}
@@ -299,145 +238,145 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Timeline */}
-        <div style={{ marginTop: 24 }}>
-          {loading && (
-            <div
-              style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', paddingTop: 40 }}
-            >
-              Loading…
-            </div>
-          )}
-          {!loading && filtered.length === 0 && (
-            <div
-              style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', paddingTop: 40 }}
-            >
-              No scans match this filter.
-            </div>
-          )}
-          {groups.map((group, gi) => (
-            <div key={gi} style={{ marginBottom: 18 }}>
-              <Eyebrow>{group.label}</Eyebrow>
-              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {group.items.map((scan) => (
-                  <button
-                    key={scan.id}
-                    onClick={() => nav.push({ name: 'plant-detail', scan })}
+      {/* Scrollable list — paddingBottom clears the absolute nav */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '20px 24px 100px',
+        }}
+      >
+        {loading && (
+          <div style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', paddingTop: 40 }}>
+            Зареждане…
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <div style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', paddingTop: 40 }}>
+            Няма сканирания за този филтър.
+          </div>
+        )}
+        {groups.map((group, gi) => (
+          <div key={gi} style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {group.items.map((scan) => (
+                <div
+                  key={scan.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => nav.push({ name: 'plant-detail', scan })}
+                  onKeyDown={(e) => e.key === 'Enter' && nav.push({ name: 'plant-detail', scan })}
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    alignItems: 'center',
+                    background: P.surface,
+                    border: `1px solid ${P.line}`,
+                    borderRadius: 14,
+                    padding: 10,
+                    textAlign: 'left',
+                    fontFamily: 'var(--font-inter-tight), sans-serif',
+                    width: '100%',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div
                     style={{
+                      width: 60,
+                      height: 76,
+                      borderRadius: 8,
+                      background: scan.imageUrl
+                        ? `url(${scan.imageUrl}) center/cover`
+                        : P.line,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div
+                    style={{
+                      flex: 1,
                       display: 'flex',
-                      gap: 12,
-                      alignItems: 'stretch',
-                      background: P.surface,
-                      border: `1px solid ${P.line}`,
-                      borderRadius: 14,
-                      padding: 10,
-                      textAlign: 'left',
-                      fontFamily: 'var(--font-inter-tight), sans-serif',
-                      width: '100%',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <div
-                      style={{
-                        width: 60,
-                        height: 76,
-                        borderRadius: 8,
-                        background: scan.imageUrl
-                          ? `url(${scan.imageUrl}) center/cover`
-                          : P.line,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <div
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontFamily: 'var(--font-fraunces), serif',
-                              fontVariationSettings: '"opsz" 144, "SOFT" 50',
-                              fontSize: 16,
-                              lineHeight: 1.1,
-                              color: P.ink,
-                            }}
-                          >
-                            {scan.speciesCommon || scan.speciesScientific || 'Unknown'}
-                          </div>
-                          <button
-                            onClick={(e) => toggleFavorite(scan, e)}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              padding: 0,
-                              color: scan.isFavorite ? P.accent : P.inkMute,
-                              fontSize: 14,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {scan.isFavorite ? '★' : '☆'}
-                          </button>
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            marginTop: 4,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: 3,
-                              background: urgencyDot[scan.urgency ?? 'low'],
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span style={{ fontSize: 12.5, color: P.inkSoft }}>
-                            {scan.likelyIssues[0]?.name || 'Healthy'}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 11,
-                              color: P.inkMute,
-                              fontFamily: 'var(--font-jetbrains-mono), monospace',
-                            }}
-                          >
-                            · {urgencyLabel[scan.urgency ?? 'low']}
-                          </span>
-                        </div>
+                    <div>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-fraunces), serif',
+                          fontVariationSettings: '"opsz" 144, "SOFT" 50',
+                          fontSize: 16,
+                          lineHeight: 1.1,
+                          color: P.ink,
+                        }}
+                      >
+                        {scan.speciesCommon || scan.speciesScientific || 'Неизвестно'}
                       </div>
                       <div
                         style={{
-                          fontSize: 11.5,
-                          color: P.inkMute,
-                          fontFamily: 'var(--font-jetbrains-mono), monospace',
-                          letterSpacing: '0.04em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          marginTop: 4,
                         }}
                       >
-                        {formatDate(scan.createdAt)}
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            background: urgencyDot[scan.urgency ?? 'low'],
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: 12.5, color: P.inkSoft }}>
+                          {scan.likelyIssues[0]?.name || 'Healthy'}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: P.inkMute,
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                          }}
+                        >
+                          · {urgencyLabel[scan.urgency ?? 'low']}
+                        </span>
                       </div>
                     </div>
+                    <div
+                      style={{
+                        fontSize: 11.5,
+                        color: P.inkMute,
+                        fontFamily: 'var(--font-jetbrains-mono), monospace',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {formatDate(scan.createdAt)}
+                    </div>
+                  </div>
+                  {/* Star — right center */}
+                  <button
+                    onClick={(e) => toggleFavorite(scan, e)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '0 4px',
+                      color: scan.isFavorite ? P.accent : P.inkMute,
+                      fontSize: 18,
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {scan.isFavorite ? '★' : '☆'}
                   </button>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
+
       <BottomNav active="history" onNavigate={onTabChange} />
     </div>
   )

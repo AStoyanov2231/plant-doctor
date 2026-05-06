@@ -5,7 +5,6 @@ import { DiagnosisOutputSchema, type DiagnosisOutput } from "@/lib/schemas";
 import { buildDiagnosisPrompt, DIAGNOSIS_SYSTEM_PROMPT } from "@/lib/prompts/diagnosis";
 import { buildChatPrompt } from "@/lib/prompts/chat";
 import type { PlantNetResult } from "@/lib/services/plantnet";
-import type { FloraResult } from "@/lib/services/flora";
 import type { ChatMessage, Scan } from "@/types/domain";
 
 const FALLBACK_MODELS = ["gemini-2.5-flash-lite"];
@@ -49,12 +48,11 @@ async function generateWithFallback(
 
 export async function generateDiagnosis(opts: {
   plantnet: PlantNetResult;
-  flora: FloraResult | null;
   imageBase64?: string;
 }): Promise<DiagnosisOutput> {
-  const { plantnet, flora, imageBase64 } = opts;
+  const { plantnet, imageBase64 } = opts;
 
-  const userText = buildDiagnosisPrompt({ plantnet, flora });
+  const userText = buildDiagnosisPrompt({ plantnet });
 
   const contents: ContentListUnion = imageBase64
     ? ([

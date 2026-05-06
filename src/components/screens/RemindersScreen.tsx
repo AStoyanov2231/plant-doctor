@@ -15,14 +15,14 @@ function formatDue(iso: string): { label: string; isDue: boolean } {
   const d = new Date(iso)
   const now = new Date()
   const diff = (d.getTime() - now.getTime()) / 1000
-  if (diff < 0) return { label: 'DUE NOW', isDue: true }
-  if (diff < 3600 * 8) return { label: 'DUE TODAY', isDue: true }
-  if (diff < 86400) return { label: 'THIS EVENING', isDue: true }
+  if (diff < 0) return { label: 'СЕГА', isDue: true }
+  if (diff < 3600 * 8) return { label: 'ДНЕС', isDue: true }
+  if (diff < 86400) return { label: 'ТАЗИ ВЕЧЕР', isDue: true }
   const days = Math.ceil(diff / 86400)
-  if (days === 1) return { label: 'TOMORROW', isDue: false }
+  if (days === 1) return { label: 'УТРЕ', isDue: false }
   return {
     label: d
-      .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      .toLocaleDateString('bg-BG', { weekday: 'short', month: 'short', day: 'numeric' })
       .toUpperCase(),
     isDue: false,
   }
@@ -30,11 +30,11 @@ function formatDue(iso: string): { label: string; isDue: boolean } {
 
 function recurrenceLabel(r: string): string {
   const m: Record<string, string> = {
-    none: 'Once',
-    daily: 'Daily',
-    weekly: 'Weekly',
-    biweekly: 'Bi-weekly',
-    monthly: 'Monthly',
+    none: 'Веднъж',
+    daily: 'Ежедневно',
+    weekly: 'Седмично',
+    biweekly: 'На две седмици',
+    monthly: 'Месечно',
   }
   return m[r] || r
 }
@@ -105,7 +105,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
     return d > today && d.toLocaleDateString() !== today.toLocaleDateString()
   })
 
-  const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  const DAYS = ['П', 'В', 'С', 'Ч', 'П', 'С', 'Н']
 
   return (
     <div
@@ -128,9 +128,9 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
           }}
         >
           <div>
-            <Eyebrow>{dueToday.length} due today</Eyebrow>
+            <Eyebrow>{dueToday.length} за днес</Eyebrow>
             <H1 style={{ marginTop: 6 }}>
-              <span style={{ fontStyle: 'italic' }}>Care</span> calendar
+              <span style={{ fontStyle: 'italic' }}>Календар</span> за грижа
             </H1>
           </div>
           <button
@@ -225,8 +225,8 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
             }}
           >
             <Eyebrow>
-              Today ·{' '}
-              {today.toLocaleDateString('en-US', {
+              Днес ·{' '}
+              {today.toLocaleDateString('bg-BG', {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',
@@ -234,7 +234,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
             </Eyebrow>
             {dueToday.length > 0 && (
               <span style={{ fontSize: 11.5, color: P.accent, fontWeight: 600 }}>
-                {dueToday.length} due
+                {dueToday.length} за изпълнение
               </span>
             )}
           </div>
@@ -247,7 +247,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
                 padding: '20px 0',
               }}
             >
-              Nothing due today.
+              Нищо за днес.
             </div>
           )}
           {dueToday.map((r) => {
@@ -270,7 +270,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
         {/* Upcoming */}
         {upcoming.length > 0 && (
           <div style={{ marginTop: 18 }}>
-            <Eyebrow>Upcoming</Eyebrow>
+            <Eyebrow>Предстоящи</Eyebrow>
             <div style={{ marginTop: 10 }}>
               {upcoming.map((r) => {
                 const { label } = formatDue(r.dueAt)
@@ -295,7 +295,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
           <div
             style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', paddingTop: 40 }}
           >
-            Loading…
+            Зареждане…
           </div>
         )}
       </div>

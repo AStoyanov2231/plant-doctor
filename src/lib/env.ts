@@ -5,8 +5,6 @@ const schema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_STORAGE_BUCKET: z.string().default("plant-images"),
   PLANTNET_API_KEY: z.string().min(1),
-  FLORA_API_KEY: z.string().min(1),
-  FLORA_API_BASE_URL: z.string().url().default("https://api.floraapi.com"),
   GEMINI_API_KEY: z.string().min(1),
   GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   SESSION_SECRET: z.string().min(32),

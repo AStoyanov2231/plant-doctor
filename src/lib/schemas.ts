@@ -17,6 +17,9 @@ export const DiagnosisOutputSchema = z.object({
   recommendedActions: z.array(z.string()),
   urgency: UrgencySchema,
   followUpQuestions: z.array(z.string()),
+  careLight: z.string().nullable().optional(),
+  careWater: z.string().nullable().optional(),
+  careToxic: z.string().nullable().optional(),
 });
 
 export type DiagnosisOutput = z.infer<typeof DiagnosisOutputSchema>;
