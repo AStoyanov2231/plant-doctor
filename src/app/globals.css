@@ -1,40 +1,33 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
+  --pd-bg: #F4EFE6;
+  --pd-surface: #FBF8F1;
+  --pd-ink: #1F2A22;
+  --pd-ink-soft: #5C6A5E;
+  --pd-ink-mute: #8C9389;
+  --pd-line: #E2DBCB;
+  --pd-primary: #2F5742;
+  --pd-primary-ink: #F4EFE6;
+  --pd-accent: #C2683C;
+  --pd-ok: #5B7A4F;
+  --pd-warn: #C28A2A;
+  --pd-danger: #B14B3A;
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 * {
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+}
+
+button {
+  cursor: pointer;
 }
 
 a {
@@ -42,8 +35,29 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+body {
+  background: var(--pd-bg);
+  color: var(--pd-ink);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+#app-root {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--pd-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  body {
+    background: #1A1F1B;
+  }
+
+  #app-root {
+    max-width: 390px;
   }
 }
