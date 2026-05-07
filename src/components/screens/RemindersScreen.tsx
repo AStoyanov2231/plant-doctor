@@ -39,6 +39,10 @@ function recurrenceLabel(r: string): string {
   return m[r] || r
 }
 
+function sameDay(a: Date, b: Date) {
+  return a.toLocaleDateString() === b.toLocaleDateString()
+}
+
 function getWeekDays() {
   const today = new Date()
   const dow = today.getDay()
@@ -55,6 +59,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [scanMap, setScanMap] = useState<Record<string, Scan>>({})
   const [loading, setLoading] = useState(true)
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date())
   const weekDays = getWeekDays()
   const today = new Date()
 
@@ -64,10 +69,10 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
       fetch('/api/scans').then((r) => r.json()),
     ])
       .then(([rems, scans]) => {
-        setReminders(Array.isArray(rems) ? rems : [])
-        if (Array.isArray(scans)) {
+        setReminders(Array.isArray(rems.reminders) ? rems.reminders : [])
+        if (Array.isArray(scans.scans)) {
           const map: Record<string, Scan> = {}
-          scans.forEach((s: Scan) => { map[s.id] = s })
+          scans.scans.forEach((s: Scan) => { map[s.id] = s })
           setScanMap(map)
         }
       })
@@ -81,11 +86,12 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
       prev.map((r) => (r.id === reminder.id ? { ...r, doneAt: now } : r))
     )
     try {
-      await fetch(`/api/reminders/${reminder.id}`, {
+      const res = await fetch(`/api/reminders/${reminder.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ doneAt: now }),
+        body: JSON.stringify({ done_at: now }),
       })
+      if (!res.ok) throw new Error('patch failed')
     } catch {
       setReminders((prev) =>
         prev.map((r) => (r.id === reminder.id ? { ...r, doneAt: null } : r))
@@ -93,17 +99,18 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
     }
   }
 
-  const dueToday = reminders.filter((r) => {
+  const isToday = sameDay(selectedDay, today)
+
+  const forSelectedDay = reminders.filter((r) => {
     if (r.doneAt) return false
     const d = new Date(r.dueAt)
-    return d.toLocaleDateString() === today.toLocaleDateString() || d < today
+    if (isToday) return sameDay(d, selectedDay) || d < today
+    return sameDay(d, selectedDay)
   })
 
-  const upcoming = reminders.filter((r) => {
-    if (r.doneAt) return false
-    const d = new Date(r.dueAt)
-    return d > today && d.toLocaleDateString() !== today.toLocaleDateString()
-  })
+  const selectedDayLabel = isToday
+    ? `Днес · ${today.toLocaleDateString('bg-BG', { weekday: 'short', month: 'short', day: 'numeric' })}`
+    : selectedDay.toLocaleDateString('bg-BG', { weekday: 'short', month: 'short', day: 'numeric' })
 
   const DAYS = ['П', 'В', 'С', 'Ч', 'П', 'С', 'Н']
 
@@ -120,6 +127,7 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
       }}
     >
       <div style={{ padding: '6px 24px 100px', flex: 1, overflowY: 'auto' }}>
+        {/* Header — title + add button, no counter */}
         <div
           style={{
             display: 'flex',
@@ -127,12 +135,9 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
             alignItems: 'flex-end',
           }}
         >
-          <div>
-            <Eyebrow>{dueToday.length} за днес</Eyebrow>
-            <H1 style={{ marginTop: 6 }}>
-              <span style={{ fontStyle: 'italic' }}>Календар</span> за грижа
-            </H1>
-          </div>
+          <H1 style={{ marginTop: 10 }}>
+            <span style={{ fontStyle: 'italic' }}>Календар</span> за грижа
+          </H1>
           <button
             onClick={() => nav.push({ name: 'new-reminder' })}
             style={{
@@ -156,33 +161,36 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
           </button>
         </div>
 
-        {/* Week strip */}
+        {/* Week strip — tappable */}
         <div style={{ display: 'flex', gap: 6, marginTop: 22 }}>
           {weekDays.map((d, i) => {
-            const isToday = d.toLocaleDateString() === today.toLocaleDateString()
+            const isSelected = sameDay(d, selectedDay)
             const hasDue = reminders.some((r) => {
               const rd = new Date(r.dueAt)
-              return rd.toLocaleDateString() === d.toLocaleDateString() && !r.doneAt
+              return sameDay(rd, d) && !r.doneAt
             })
             return (
-              <div
+              <button
                 key={i}
+                onClick={() => setSelectedDay(d)}
                 style={{
                   flex: 1,
-                  background: isToday ? P.ink : P.surface,
-                  color: isToday ? P.bg : P.ink,
-                  border: `1px solid ${isToday ? P.ink : P.line}`,
+                  background: isSelected ? P.ink : P.surface,
+                  color: isSelected ? P.bg : P.ink,
+                  border: `1px solid ${isSelected ? P.ink : P.line}`,
                   borderRadius: 10,
                   padding: '8px 0',
                   textAlign: 'center',
                   position: 'relative',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 <div
                   style={{
                     fontFamily: 'var(--font-jetbrains-mono), monospace',
                     fontSize: 10,
-                    color: isToday ? P.bg : P.inkMute,
+                    color: isSelected ? P.bg : P.inkMute,
                     letterSpacing: '0.06em',
                   }}
                 >
@@ -204,61 +212,40 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
                       width: 4,
                       height: 4,
                       borderRadius: 2,
-                      background: isToday ? P.bg : P.accent,
+                      background: isSelected ? P.bg : P.accent,
                       margin: '4px auto 0',
                     }}
                   />
                 )}
-              </div>
+              </button>
             )
           })}
         </div>
 
-        {/* Today */}
+        {/* Reminders for selected day */}
         <div style={{ marginTop: 24 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              marginBottom: 10,
-            }}
-          >
-            <Eyebrow>
-              Днес ·{' '}
-              {today.toLocaleDateString('bg-BG', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </Eyebrow>
-            {dueToday.length > 0 && (
-              <span style={{ fontSize: 11.5, color: P.accent, fontWeight: 600 }}>
-                {dueToday.length} за изпълнение
-              </span>
-            )}
-          </div>
-          {dueToday.length === 0 && !loading && (
-            <div
-              style={{
-                fontSize: 13,
-                color: P.inkMute,
-                textAlign: 'center',
-                padding: '20px 0',
-              }}
-            >
-              Нищо за днес.
+          <Eyebrow style={{ marginBottom: 10 }}>
+            {selectedDayLabel}
+          </Eyebrow>
+          {loading && (
+            <div style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
+              Зареждане…
             </div>
           )}
-          {dueToday.map((r) => {
-            const { label } = formatDue(r.dueAt)
+          {!loading && forSelectedDay.length === 0 && (
+            <div style={{ fontSize: 13, color: P.inkMute, textAlign: 'center', padding: '20px 0' }}>
+              Нищо за {isToday ? 'днес' : selectedDay.toLocaleDateString('bg-BG', { weekday: 'long' })}.
+            </div>
+          )}
+          {forSelectedDay.map((r) => {
+            const { label, isDue } = formatDue(r.dueAt)
             const scan = r.scanId ? scanMap[r.scanId] : undefined
             return (
               <ReminderRow
                 key={r.id}
                 reminder={r}
                 dueLabel={label}
-                isDue
+                isDue={isDue}
                 scanImageUrl={scan?.imageUrl}
                 plantName={scan?.speciesCommon ?? scan?.speciesScientific ?? undefined}
                 onMark={() => markDone(r)}
@@ -266,38 +253,6 @@ export function RemindersScreen({ nav, onTabChange }: Props) {
             )
           })}
         </div>
-
-        {/* Upcoming */}
-        {upcoming.length > 0 && (
-          <div style={{ marginTop: 18 }}>
-            <Eyebrow>Предстоящи</Eyebrow>
-            <div style={{ marginTop: 10 }}>
-              {upcoming.map((r) => {
-                const { label } = formatDue(r.dueAt)
-                const scan = r.scanId ? scanMap[r.scanId] : undefined
-                return (
-                  <ReminderRow
-                    plantName={scan?.speciesCommon ?? scan?.speciesScientific ?? undefined}
-                    key={r.id}
-                    reminder={r}
-                    dueLabel={label}
-                    isDue={false}
-                    scanImageUrl={scan?.imageUrl}
-                    onMark={() => markDone(r)}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {loading && (
-          <div
-            style={{ color: P.inkMute, fontSize: 13, textAlign: 'center', paddingTop: 40 }}
-          >
-            Зареждане…
-          </div>
-        )}
       </div>
       <BottomNav active="reminders" onNavigate={onTabChange} />
     </div>
@@ -359,7 +314,7 @@ function ReminderRow({
           </svg>
         )}
       </button>
-      {/* Plant thumbnail — from design (44×44) */}
+      {/* Plant thumbnail */}
       <div
         style={{
           width: 44,
