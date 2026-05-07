@@ -70,10 +70,13 @@ export function HomeScreen({ nav, onTabChange }: Props) {
           fontFamily: 'var(--font-inter-tight), sans-serif',
           color: P.ink,
           position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
-        {/* Headline */}
-        <div style={{ padding: '36px 24px 0' }}>
+        {/* Headline — grows to fill space, pushes CTAs down */}
+        <div style={{ flex: 1, padding: '36px 24px 0' }}>
           <H1 style={{ marginTop: 10 }}>
             Какво
             <br />
@@ -83,17 +86,14 @@ export function HomeScreen({ nav, onTabChange }: Props) {
           </H1>
         </div>
 
-        {/* CTAs — float above the nav bar (nav is ~80px tall) */}
+        {/* CTAs — sits naturally above the nav bar; paddingBottom clears it */}
         <div
           style={{
-            position: 'absolute',
-            bottom: 100,
-            left: 0,
-            right: 0,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: 14,
+            paddingBottom: 110,
           }}
         >
           {/* Camera — icon only circle */}
