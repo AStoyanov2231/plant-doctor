@@ -135,7 +135,7 @@ export function BottomNav({
         left: 0,
         right: 0,
         paddingTop: 10,
-        paddingBottom: 28,
+        paddingBottom: 'max(28px, env(safe-area-inset-bottom, 0px))',
         background: P.surface,
         borderTop: `1px solid ${P.line}`,
         display: 'flex',

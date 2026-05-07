@@ -100,7 +100,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
       <div
         style={{
           width: '100%',
-          height: '100vh',
+          height: '100%',
           background: P.bg,
           fontFamily: 'var(--font-inter-tight), sans-serif',
           color: P.ink,
@@ -194,7 +194,7 @@ export function HistoryScreen({ nav, onTabChange }: Props) {
     <div
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100%',
         background: P.bg,
         fontFamily: 'var(--font-inter-tight), sans-serif',
         color: P.ink,
